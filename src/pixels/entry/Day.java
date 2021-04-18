@@ -3,21 +3,20 @@ package pixels.entry;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javax.swing.*;
+import javax.swing.border.TitledBorder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class Day implements Comparable<Day> {
 
-    private Date date;
-    private String stringDate;
-    private boolean isHighlighted;
-    private String notes;
-    private int mood;
+    private final Date date;
+    private final String stringDate;
+    private final boolean isHighlighted;
+    private final String notes;
+    private final int mood;
     private final HashMap<String, ArrayList<String>> tags = new HashMap<>();
 
     public Day(String input) throws ParseException {
@@ -56,6 +55,33 @@ public class Day implements Comparable<Day> {
         return stringDate;
     }
 
+    public boolean search(String[] search, boolean allTerms, boolean notes, boolean tags, boolean date) {
+        boolean found = false;
+        for (String term : search) {
+            if (notes && this.notes.contains(term)) found = true;
+            if (tags && tagsContain(term)) found = true;
+            if (date && this.stringDate.contains(term)) found = true;
+            if (allTerms && !found) return false;
+            else if (!allTerms && found) return true;
+        }
+        return false;
+    }
+
+    private boolean tagsContain(String term) {
+        return tags.entrySet().stream().anyMatch(tags -> tags.getValue().contains(term));
+    }
+
+    public void setButtonLoadDay(JButton button, JTextArea notes, JLabel tags, JPanel pixelsView) {
+        button.setBackground(Entries.mapMoodToColor(mood));
+        button.setVisible(true);
+        Arrays.stream(button.getActionListeners()).forEach(button::removeActionListener);
+        button.addActionListener(e -> {
+            pixelsView.setBorder(new TitledBorder(stringDate));
+            tags.setText(getTags());
+            notes.setText(this.notes);
+        });
+    }
+
     public void print() {
         System.out.println(stringDate);
         System.out.println(isHighlighted);
@@ -72,7 +98,6 @@ public class Day implements Comparable<Day> {
     private final static String KEY_TAGS = "tags";
     private final static String KEY_TAG_ENTRIES = "entries";
     private final static String KEY_TAG_TYPE = "type";
-    private final static String KEY_TAG_TYPE_EMOTIONS = "Emotions";
 
     private final static SimpleDateFormat INPUT_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
     private final static SimpleDateFormat OUTPUT_DATE_FORMAT = new SimpleDateFormat("yyyy/MM/dd");

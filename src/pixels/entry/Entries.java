@@ -1,13 +1,12 @@
 package pixels.entry;
 
 import org.json.JSONArray;
+import yanwittmann.utils.Log;
 
 import javax.swing.*;
-import javax.swing.border.TitledBorder;
 import java.awt.*;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,18 +21,19 @@ public class Entries {
 
     public void setDayToButton(JButton button, JTextArea notes, JLabel tags, JPanel pixelsView, int year, int month, int day) {
         Day foundDay = getDay(year + "/" + makeDoubleDigit(month) + "/" + makeDoubleDigit(day));
+        button.setText(day + "");
         if (foundDay != null) {
-            button.setText(day + "");
-            button.setBackground(mapMoodToColor(foundDay.getMood()));
+            foundDay.setButtonLoadDay(button, notes, tags, pixelsView);
+        } else {
+            button.setBackground(MOOD_MISSING);
             button.setVisible(true);
-            Arrays.stream(button.getActionListeners()).forEach(button::removeActionListener);
-            button.addActionListener(e -> {
-                pixelsView.setBorder(new TitledBorder(foundDay.getDay()));
-                pixelsView.setBackground(mapMoodToColor(foundDay.getMood()));
-                tags.setText(foundDay.getTags());
-                notes.setText(foundDay.getNotes());
-            });
         }
+    }
+
+    public void search(String search, boolean allTerms, boolean notes, boolean tags, boolean date) {
+        String[] terms = search.split(" ");
+        List<Day> results = days.stream().filter(day -> day.search(terms, allTerms, notes, tags, date)).collect(Collectors.toList());
+        results.stream().map(Day::getDay).forEach(Log::info);
     }
 
     private String makeDoubleDigit(int n) {
@@ -44,7 +44,7 @@ public class Entries {
         return days.stream().filter(day -> day.isDay(searchDate)).findFirst().orElse(null);
     }
 
-    private Color mapMoodToColor(int mood) {
+    public static Color mapMoodToColor(int mood) {
         return switch (mood) {
             case 1 -> MOOD_1;
             case 2 -> MOOD_2;
@@ -59,5 +59,6 @@ public class Entries {
     private final static Color MOOD_3 = new Color(245, 192, 0);
     private final static Color MOOD_4 = new Color(155, 243, 0);
     private final static Color MOOD_5 = new Color(42, 219, 0);
+    private final static Color MOOD_MISSING = new Color(206, 206, 206);
 
 }

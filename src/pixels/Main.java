@@ -12,10 +12,13 @@ import java.text.ParseException;
 
 public class Main {
 
-    private GuiMainView pixelsMainFrame;
+    private GuiMainView pixelsMainFrameGui;
+    private JFrame pixelsMainFrame;
     private Entries entries;
+    private static Main self;
 
     public Main() {
+        self = this;
         try {
             loadEntries();
             createGui();
@@ -25,22 +28,22 @@ public class Main {
     }
 
     private void createGui() {
-        pixelsMainFrame = new GuiMainView(entries);
-        JFrame frame = new JFrame(Constants.FRAME_TITLE);
+        pixelsMainFrameGui = new GuiMainView(entries);
+        pixelsMainFrame = new JFrame(Constants.FRAME_TITLE_GENERAL);
 
-        frame.setContentPane(pixelsMainFrame.getMainPane());
-        frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-        frame.setIconImage(new ImageIcon("res/img/icon.png").getImage());
-        frame.addWindowListener(new WindowAdapter() {
+        pixelsMainFrame.setContentPane(pixelsMainFrameGui.getMainPane());
+        pixelsMainFrame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+        pixelsMainFrame.setIconImage(new ImageIcon("res/img/icon.png").getImage());
+        pixelsMainFrame.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                frame.dispose();
+                pixelsMainFrame.dispose();
                 System.exit(0);
             }
         });
-        frame.pack();
-        frame.setLocationRelativeTo(null);
-        frame.setVisible(true);
+        pixelsMainFrame.pack();
+        pixelsMainFrame.setLocationRelativeTo(null);
+        pixelsMainFrame.setVisible(true);
     }
 
     private void loadEntries() throws IOException, ParseException {
