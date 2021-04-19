@@ -37,6 +37,7 @@ public class GuiSearchPixels extends JDialog {
         contentPane.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
         setTitle(Constants.FRAME_TITLE_GENERAL + " - " + Constants.FRAME_TITLE_SEARCH);
+        setIconImage(new ImageIcon("res/img/icon.png").getImage());
         pack();
         setLocationRelativeTo(null);
         setVisible(true);

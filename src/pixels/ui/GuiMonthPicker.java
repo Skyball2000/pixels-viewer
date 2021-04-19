@@ -42,6 +42,7 @@ public class GuiMonthPicker extends JDialog {
         monthComboBox.setSelectedItem((calendar.get(Calendar.MONTH) + 1) + "");
 
         setTitle(Constants.FRAME_TITLE_GENERAL + " - " + Constants.FRAME_TITLE_GO_TO_MONTH);
+        setIconImage(new ImageIcon("res/img/icon.png").getImage());
         pack();
         setLocationRelativeTo(null);
         setVisible(true);

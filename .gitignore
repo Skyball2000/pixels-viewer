@@ -27,3 +27,6 @@ hs_err_pid*
 
 # out
 out
+
+# pixels data
+res/pixels
