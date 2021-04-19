@@ -8,6 +8,9 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultHighlighter;
+import javax.swing.text.Highlighter;
 import java.awt.*;
 import java.text.MessageFormat;
 import java.time.LocalDate;
@@ -34,8 +37,11 @@ public class GuiMainView {
     private JTextArea resultsColorTextArea;
     private JPanel panelNavigateButtons;
     private JLabel labelStatus;
+    private JButton exitSearchButton;
 
     private final Entries entries;
+    private String[] currentSearchTerms;
+    private boolean isInSearch = false;
 
     private static GuiMainView self;
 
@@ -75,16 +81,20 @@ public class GuiMainView {
                 String search = dialog.getSearch();
 
                 if (ignoreCase) search = search.toLowerCase(Locale.ROOT);
-                entries.search(search, allTerms, notes, tags, date, ignoreCase);
-                setStatus(MessageFormat.format("{0} results for search {1}", entries.getResults().size(), Arrays.toString(search.split(" "))));
+                search = search.trim();
+                currentSearchTerms = search.split(" ");
+                entries.search(currentSearchTerms, allTerms, notes, tags, date, ignoreCase);
+                setStatus(MessageFormat.format("{0} results for search {1}", entries.getResults().size(), Arrays.toString(currentSearchTerms)));
+                isInSearch = true;
                 nextSearchResult();
             }
         });
-        previousResultButton.addActionListener(e -> {
-            previousSearchResult();
-        });
-        nextResultButton.addActionListener(e -> {
-            nextSearchResult();
+        previousResultButton.addActionListener(e -> previousSearchResult());
+        nextResultButton.addActionListener(e -> nextSearchResult());
+        exitSearchButton.addActionListener(e -> {
+            isInSearch = false;
+            removeResultsHighlight();
+            entries.clearResults();
         });
     }
 
@@ -123,6 +133,7 @@ public class GuiMainView {
         prepareButton(buttonSearch);
         prepareButton(previousResultButton);
         prepareButton(nextResultButton);
+        prepareButton(exitSearchButton);
 
         Calendar calendar = Calendar.getInstance();
         setMonth(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1);
@@ -188,7 +199,31 @@ public class GuiMainView {
     }
 
     private void removeResultsHighlight() {
-        for (JButton pixel : pixels) pixel.setBorder(NO_HIGHLIGHT);
+        for (JButton pixel : pixels)
+            if (pixel.getBorder() != HIGHLIGHT_SELECTED)
+                pixel.setBorder(NO_HIGHLIGHT);
+    }
+
+    public static void highlightAllCurrentTerms() {
+        if (self.isInSearch)
+            for (String term : self.currentSearchTerms) {
+                try {
+                    self.highlightNoteSearchWords(term.toLowerCase(Locale.ROOT));
+                } catch (BadLocationException e) {
+                    e.printStackTrace();
+                }
+            }
+    }
+
+    private void highlightNoteSearchWords(String highlight) throws BadLocationException {
+        String searchText = notesTextArea.getText().toLowerCase(Locale.ROOT);
+        if (searchText.contains(highlight)) {
+            Highlighter highlighter = notesTextArea.getHighlighter();
+            Highlighter.HighlightPainter painter = new DefaultHighlighter.DefaultHighlightPainter(Color.pink);
+            int p0 = searchText.indexOf(highlight);
+            int p1 = p0 + highlight.length();
+            highlighter.addHighlight(p0, p1, painter);
+        }
     }
 
     public void setStatus(String text) {

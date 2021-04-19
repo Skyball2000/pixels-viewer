@@ -111,6 +111,7 @@ public class Day implements Comparable<Day> {
         textAreaNotes.setText(this.notes);
         GuiMainView.highlightAllResults();
         highlightButton(GuiMainView.HIGHLIGHT_SELECTED);
+        GuiMainView.highlightAllCurrentTerms();
     }
 
     private static JButton lastSelectedButton;

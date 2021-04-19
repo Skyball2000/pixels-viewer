@@ -3,12 +3,14 @@ package pixels;
 import pixels.entry.Entries;
 import pixels.ui.GuiMainView;
 import yanwittmann.types.File;
+import yanwittmann.utils.FileUtils;
+import yanwittmann.utils.Popup;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.IOException;
-import java.text.ParseException;
 
 public class Main {
 
@@ -19,11 +21,15 @@ public class Main {
 
     public Main() {
         self = this;
+        loadEntries();
         try {
-            loadEntries();
             createGui();
         } catch (Exception e) {
             e.printStackTrace();
+            Popup.error(Constants.FRAME_TITLE_GENERAL, "Something went wrong while preparing the pixels.\n" +
+                    "Please make sure that your pixels are in the unchanged default JSON export format.\n" +
+                    "The exact error message: " + e.getMessage());
+            System.exit(2);
         }
     }
 
@@ -46,8 +52,25 @@ public class Main {
         pixelsMainFrame.setVisible(true);
     }
 
-    private void loadEntries() throws IOException, ParseException {
-        entries = new Entries(String.join("", new File("res/pixels/pixels.json").readToArray()));
+    private void loadEntries() {
+        try {
+            FileDialog picker = new FileDialog((Frame)null, Constants.FRAME_TITLE_GENERAL + " - Pick your pixels.json file!");
+            picker.setDirectory(new File("").getAbsolutePath());
+            picker.setIconImage(new ImageIcon("res/img/icon.png").getImage());
+            picker.setVisible(true);
+            java.io.File[] files = picker.getFiles();
+            if (files.length > 0) {
+                File file = new File(files[0].getAbsolutePath());
+                if (file.exists())
+                    entries = new Entries(String.join("", file.readToArray()));
+            } else System.exit(3);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Popup.error(Constants.FRAME_TITLE_GENERAL, "Unable to read pixels from file.\n" +
+                    "Please make sure that your pixels are in the unchanged default JSON export format.\n" +
+                    "The exact error message: " + e.getMessage());
+            System.exit(1);
+        }
     }
 
     private static void setSystemLookAndFeel() {

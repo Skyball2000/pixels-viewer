@@ -30,3 +30,5 @@ out
 
 # pixels data
 res/pixels
+build/*.jar
+build/*.zip

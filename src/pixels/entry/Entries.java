@@ -35,8 +35,7 @@ public class Entries {
     private List<Day> results;
     private int currentSearchResult = 0;
 
-    public void search(String search, boolean allTerms, boolean notes, boolean tags, boolean date, boolean ignoreCase) {
-        String[] terms = search.split(" ");
+    public void search(String[] terms, boolean allTerms, boolean notes, boolean tags, boolean date, boolean ignoreCase) {
         Log.info("Searching for {}", Arrays.toString(terms));
         results = days.stream().filter(day -> day.search(terms, allTerms, notes, tags, date, ignoreCase)).collect(Collectors.toList());
         currentSearchResult = -1;
@@ -57,6 +56,10 @@ public class Entries {
 
     public List<Day> getResults() {
         return results;
+    }
+
+    public void clearResults() {
+        results.clear();
     }
 
     private String makeDoubleDigit(int n) {
