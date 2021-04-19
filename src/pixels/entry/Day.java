@@ -2,11 +2,16 @@ package pixels.entry;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import pixels.ui.GuiMainView;
+import yanwittmann.utils.Log;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -51,35 +56,82 @@ public class Day implements Comparable<Day> {
         return stringDate.equals(day);
     }
 
-    public String getDay() {
+    public String getDate() {
         return stringDate;
     }
 
-    public boolean search(String[] search, boolean allTerms, boolean notes, boolean tags, boolean date) {
-        boolean found = false;
+    public boolean search(String[] search, boolean allTerms, boolean notes, boolean tags, boolean date, boolean ignoreCase) {
+        boolean found;
         for (String term : search) {
-            if (notes && this.notes.contains(term)) found = true;
-            if (tags && tagsContain(term)) found = true;
+            found = false;
+            if (notes)
+                if (ignoreCase) {
+                    if (this.notes.toLowerCase(Locale.ROOT).contains(term)) found = true;
+                } else {
+                    if (this.notes.contains(term)) found = true;
+                }
+            if (tags && tagsContain(term, ignoreCase)) found = true;
             if (date && this.stringDate.contains(term)) found = true;
             if (allTerms && !found) return false;
             else if (!allTerms && found) return true;
         }
-        return false;
+        return allTerms;
     }
 
-    private boolean tagsContain(String term) {
+    private boolean tagsContain(String term, boolean ignoreCase) {
+        if (ignoreCase)
+            return tags.entrySet().stream().anyMatch(tags -> tags.getValue().stream().map(tag -> tag.toLowerCase(Locale.ROOT)).collect(Collectors.toList()).contains(term));
         return tags.entrySet().stream().anyMatch(tags -> tags.getValue().contains(term));
     }
 
-    public void setButtonLoadDay(JButton button, JTextArea notes, JLabel tags, JPanel pixelsView) {
-        button.setBackground(Entries.mapMoodToColor(mood));
-        button.setVisible(true);
-        Arrays.stream(button.getActionListeners()).forEach(button::removeActionListener);
-        button.addActionListener(e -> {
-            pixelsView.setBorder(new TitledBorder(stringDate));
-            tags.setText(getTags());
-            notes.setText(this.notes);
-        });
+    private JButton displayButton;
+    private JTextArea textAreaNotes;
+    private JTextArea textAreaResultsColor;
+    private JLabel labelTags;
+    private JPanel panelPixelsView;
+
+    public void setButtonLoadDay(JButton button, JTextArea notes, JLabel tags, JPanel pixelsView, JTextArea resultsColor) {
+        this.displayButton = button;
+        this.textAreaNotes = notes;
+        this.labelTags = tags;
+        this.panelPixelsView = pixelsView;
+        this.textAreaResultsColor = resultsColor;
+
+        this.displayButton.setBackground(Entries.mapMoodToColor(mood));
+        this.displayButton.setVisible(true);
+        Arrays.stream(this.displayButton.getActionListeners()).forEach(this.displayButton::removeActionListener);
+        this.displayButton.addActionListener(e -> loadDayToResults());
+    }
+
+    public void loadDayToResults() {
+        if (displayButton.getBackground() == Entries.MOOD_MISSING) return;
+        panelPixelsView.setBorder(new TitledBorder(stringDate));
+        textAreaResultsColor.setBackground(Entries.mapMoodToColor(mood));
+        labelTags.setText(getTags());
+        textAreaNotes.setText(this.notes);
+        GuiMainView.highlightAllResults();
+        highlightButton(GuiMainView.HIGHLIGHT_SELECTED);
+    }
+
+    private static JButton lastSelectedButton;
+
+    public void highlightButton(Border border) {
+        if (lastSelectedButton != null && lastSelectedButton.getBorder() != GuiMainView.HIGHLIGHT)
+            lastSelectedButton.setBorder(GuiMainView.NO_HIGHLIGHT);
+        displayButton.setBorder(border);
+        lastSelectedButton = displayButton;
+    }
+
+    public int getMonth() {
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getMonthValue();
+    }
+
+    public int getYear() {
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getYear();
+    }
+
+    public int getDay() {
+        return date.toInstant().atZone(ZoneId.systemDefault()).toLocalDate().getDayOfMonth();
     }
 
     public void print() {

@@ -7,7 +7,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Collectors;
 
 public class Entries {
@@ -19,21 +21,42 @@ public class Entries {
         days = days.stream().sorted().collect(Collectors.toList());
     }
 
-    public void setDayToButton(JButton button, JTextArea notes, JLabel tags, JPanel pixelsView, int year, int month, int day) {
+    public void setDayToButton(JButton button, JTextArea notes, JLabel tags, JPanel pixelsView, JTextArea resultsColor, int year, int month, int day) {
         Day foundDay = getDay(year + "/" + makeDoubleDigit(month) + "/" + makeDoubleDigit(day));
         button.setText(day + "");
         if (foundDay != null) {
-            foundDay.setButtonLoadDay(button, notes, tags, pixelsView);
+            foundDay.setButtonLoadDay(button, notes, tags, pixelsView, resultsColor);
         } else {
             button.setBackground(MOOD_MISSING);
             button.setVisible(true);
         }
     }
 
-    public void search(String search, boolean allTerms, boolean notes, boolean tags, boolean date) {
+    private List<Day> results;
+    private int currentSearchResult = 0;
+
+    public void search(String search, boolean allTerms, boolean notes, boolean tags, boolean date, boolean ignoreCase) {
         String[] terms = search.split(" ");
-        List<Day> results = days.stream().filter(day -> day.search(terms, allTerms, notes, tags, date)).collect(Collectors.toList());
-        results.stream().map(Day::getDay).forEach(Log::info);
+        Log.info("Searching for {}", Arrays.toString(terms));
+        results = days.stream().filter(day -> day.search(terms, allTerms, notes, tags, date, ignoreCase)).collect(Collectors.toList());
+        currentSearchResult = -1;
+    }
+
+    public Day nextSearchResult() {
+        if(results.size() == 0) return null;
+        currentSearchResult = (currentSearchResult + 1) % results.size();
+        return results.get(currentSearchResult);
+    }
+
+    public Day previousSearchResult() {
+        if(results.size() == 0) return null;
+        currentSearchResult--;
+        if (currentSearchResult < 0) currentSearchResult = results.size() - 1;
+        return results.get(currentSearchResult);
+    }
+
+    public List<Day> getResults() {
+        return results;
     }
 
     private String makeDoubleDigit(int n) {
@@ -55,10 +78,10 @@ public class Entries {
     }
 
     private final static Color MOOD_1 = new Color(255, 30, 0);
-    private final static Color MOOD_2 = new Color(236, 156, 0);
+    private final static Color MOOD_2 = new Color(255, 135, 0);
     private final static Color MOOD_3 = new Color(245, 192, 0);
     private final static Color MOOD_4 = new Color(155, 243, 0);
     private final static Color MOOD_5 = new Color(42, 219, 0);
-    private final static Color MOOD_MISSING = new Color(206, 206, 206);
+    public final static Color MOOD_MISSING = new Color(206, 206, 206);
 
 }

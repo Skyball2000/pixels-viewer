@@ -1,16 +1,20 @@
 package pixels.ui;
 
+import pixels.entry.Day;
 import pixels.entry.Entries;
 import yanwittmann.utils.Log;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.LineBorder;
 import javax.swing.border.TitledBorder;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.text.MessageFormat;
 import java.time.LocalDate;
 import java.time.temporal.TemporalAdjusters;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Locale;
 
 public class GuiMainView {
     private JPanel dateSelectionPaneIJ;
@@ -24,10 +28,19 @@ public class GuiMainView {
     private JButton buttonNextMonth;
     private JButton buttonGoToMonth;
     private JButton buttonSearch;
+    private JButton previousResultButton;
+    private JButton nextResultButton;
+    private JPanel leftSidePanel;
+    private JTextArea resultsColorTextArea;
+    private JPanel panelNavigateButtons;
+    private JLabel labelStatus;
 
     private final Entries entries;
 
+    private static GuiMainView self;
+
     public GuiMainView(Entries entries) {
+        self = this;
         this.entries = entries;
         buttonPreviousMonth.addActionListener(e -> {
             currentMonth--;
@@ -55,13 +68,23 @@ public class GuiMainView {
             GuiSearchPixels dialog = new GuiSearchPixels();
             if (!dialog.isCancelled()) {
                 boolean allTerms = dialog.allTermsMustBeContained();
+                boolean ignoreCase = dialog.ignoreCase();
                 boolean notes = dialog.searchInNotes();
                 boolean tags = dialog.searchInTags();
                 boolean date = dialog.searchInDate();
                 String search = dialog.getSearch();
 
-                entries.search(search, allTerms, notes, tags, date);
+                if (ignoreCase) search = search.toLowerCase(Locale.ROOT);
+                entries.search(search, allTerms, notes, tags, date, ignoreCase);
+                setStatus(MessageFormat.format("{0} results for search {1}", entries.getResults().size(), Arrays.toString(search.split(" "))));
+                nextSearchResult();
             }
+        });
+        previousResultButton.addActionListener(e -> {
+            previousSearchResult();
+        });
+        nextResultButton.addActionListener(e -> {
+            nextSearchResult();
         });
     }
 
@@ -94,13 +117,22 @@ public class GuiMainView {
 
         notesTextArea.setWrapStyleWord(true);
 
-        buttonPreviousMonth.setBackground(BUTTON_COLOR);
-        buttonNextMonth.setBackground(BUTTON_COLOR);
-        buttonGoToMonth.setBackground(BUTTON_COLOR);
-        buttonSearch.setBackground(BUTTON_COLOR);
+        prepareButton(buttonPreviousMonth);
+        prepareButton(buttonNextMonth);
+        prepareButton(buttonGoToMonth);
+        prepareButton(buttonSearch);
+        prepareButton(previousResultButton);
+        prepareButton(nextResultButton);
 
         Calendar calendar = Calendar.getInstance();
         setMonth(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH) + 1);
+
+        resultsColorTextArea.setBackground(Entries.MOOD_MISSING);
+    }
+
+    private void prepareButton(JButton button) {
+        button.setBackground(BUTTON_COLOR);
+        button.setBorder(BUTTON_BORDER);
     }
 
     private int currentYear, currentMonth;
@@ -120,14 +152,47 @@ public class GuiMainView {
         int counter = 0;
         for (int i = startingDay; i < endingDayDate + startingDay; i++) {
             counter++;
-            entries.setDayToButton(pixels[i], notesTextArea, tagsLabel, resultsPane, year, month, counter);
+            entries.setDayToButton(pixels[i], notesTextArea, tagsLabel, resultsPane, resultsColorTextArea, year, month, counter);
         }
+        highlightAllResults();
     }
 
     private void hidePixels() {
-        for (int i = 0; i < pixels.length; i++) {
-            pixels[i].setVisible(false);
+        for (JButton pixel : pixels) pixel.setVisible(false);
+    }
+
+    private void nextSearchResult() {
+        if (entries.getResults() != null) {
+            Day searchResult = entries.nextSearchResult();
+            if (searchResult == null) return;
+            setMonth(searchResult.getYear(), searchResult.getMonth());
+            searchResult.loadDayToResults();
         }
+    }
+
+    private void previousSearchResult() {
+        if (entries.getResults() != null) {
+            Day searchResult = entries.previousSearchResult();
+            if (searchResult == null) return;
+            setMonth(searchResult.getYear(), searchResult.getMonth());
+            searchResult.loadDayToResults();
+        }
+    }
+
+    public static void highlightAllResults() {
+        self.removeResultsHighlight();
+        if (self.entries.getResults() != null)
+            for (Day result : self.entries.getResults())
+                if (self.currentMonth == result.getMonth() && self.currentYear == result.getYear())
+                    result.highlightButton(GuiMainView.HIGHLIGHT);
+    }
+
+    private void removeResultsHighlight() {
+        for (JButton pixel : pixels) pixel.setBorder(NO_HIGHLIGHT);
+    }
+
+    public void setStatus(String text) {
+        labelStatus.setText(text);
     }
 
     public JPanel getMainPane() {
@@ -135,4 +200,8 @@ public class GuiMainView {
     }
 
     private final static Color BUTTON_COLOR = Color.WHITE;
+    public final static Border BUTTON_BORDER = new LineBorder(new Color(0, 0, 0, 0), 4);
+    public final static Border HIGHLIGHT = new LineBorder(Color.BLACK, 3);
+    public final static Border HIGHLIGHT_SELECTED = new LineBorder(Color.BLUE, 3);
+    public final static Border NO_HIGHLIGHT = null;
 }

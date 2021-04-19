@@ -14,23 +14,16 @@ public class GuiSearchPixels extends JDialog {
     private JTextField textFieldSearchText;
     private JCheckBox searchInDateCheckBox;
     private JCheckBox searchInTagsCheckBox;
+    private JCheckBox ignoreCaseCheckBox;
 
     public GuiSearchPixels() {
         setContentPane(contentPane);
         setModal(true);
         getRootPane().setDefaultButton(buttonOK);
 
-        buttonOK.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onOK();
-            }
-        });
+        buttonOK.addActionListener(e -> onOK());
 
-        buttonCancel.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onCancel();
-            }
-        });
+        buttonCancel.addActionListener(e -> onCancel());
 
         // call onCancel() when cross is clicked
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -41,11 +34,7 @@ public class GuiSearchPixels extends JDialog {
         });
 
         // call onCancel() on ESCAPE
-        contentPane.registerKeyboardAction(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                onCancel();
-            }
-        }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+        contentPane.registerKeyboardAction(e -> onCancel(), KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
 
         setTitle(Constants.FRAME_TITLE_GENERAL + " - " + Constants.FRAME_TITLE_SEARCH);
         pack();
@@ -82,6 +71,10 @@ public class GuiSearchPixels extends JDialog {
 
     public boolean searchInDate() {
         return searchInDateCheckBox.isSelected();
+    }
+
+    public boolean ignoreCase() {
+        return ignoreCaseCheckBox.isSelected();
     }
 
     public boolean allTermsMustBeContained() {

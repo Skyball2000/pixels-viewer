@@ -39,6 +39,7 @@ public class GuiMonthPicker extends JDialog {
         yearComboBox.setModel(years);
         DefaultComboBoxModel<String> months = new DefaultComboBoxModel<>(getArray(1, 12));
         monthComboBox.setModel(months);
+        monthComboBox.setSelectedItem((calendar.get(Calendar.MONTH) + 1) + "");
 
         setTitle(Constants.FRAME_TITLE_GENERAL + " - " + Constants.FRAME_TITLE_GO_TO_MONTH);
         pack();
